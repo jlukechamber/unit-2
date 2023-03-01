@@ -1,8 +1,42 @@
 /*Add CSS styles here*/
 body{
-    margin:0;
+    margin: 10px;
 }
 #map{
-    height: 100vh;
-    width: 100vw;
+    height: 450px;
+    width: 80%;
+    display: inline-block;
+    
+}
+#panel {    
+    width: 25%;    
+    padding: 20px;
+    display: inline-block;
+    vertical-align: top;
+    text-align: center;
+    line-height: 42px;
+}
+
+#forward {
+    float: right;
+}
+
+#reverse {  
+    float: left;  
+}
+
+.leaflet-popup-content p {
+    margin: 0.2em 0;
+}
+
+.range-slider {  
+    width: 55%;  
+}  
+
+.step {  
+    width: 20%;  
+}  
+
+.step img {  
+    width: 100%;  
 }
