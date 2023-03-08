@@ -1,13 +1,37 @@
 /*Add CSS styles here*/
+
 body{
     margin: 10px;
+    text-align: center;
+    background-color:whitesmoke;
+    color:rgb(85, 85, 85);
 }
 #map{
     height: 450px;
-    width: 80%;
+    width: 90%;
     display: inline-block;
-    
 }
+
+.sequence-control-container {  
+    width: 350px;  
+    height: 30px;  
+    background-color: rgba(255,255,255,0.8);  
+    padding: 10px;  
+    line-height: 45px;  
+    text-align: center;  
+    border: solid gray 1px;  
+}
+
+.legend-control-container {
+    width: 220px;
+    height: 180px;
+    font-weight: bold;
+    background-color: rgba(255,255,255,0.8);
+    padding: 5px;
+    text-align: center;
+    border: solid gray 1px;
+}
+
 #panel {    
     width: 25%;    
     padding: 20px;
@@ -35,8 +59,9 @@ body{
 
 .step {  
     width: 20%;  
+    height:100%;
 }  
 
 .step img {  
-    width: 100%;  
+    height:100%;  
 }

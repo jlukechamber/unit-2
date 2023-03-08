@@ -1,10 +1,12 @@
-// Add all scripts to the JS folder
-/* Map of GeoJSON data from MegaCities.geojson */
-//declare map var in global scope
+//Luke Chamberlain
+//March 8 2023
+
+//declare empty variables
 var map;
 var minValue;
-//function to instantiate the Leaflet map
+var dataStats = {};
 
+//basemap
 var Stamen_TonerLite = L.tileLayer('https://stamen-tiles-{s}.a.ssl.fastly.net/toner-lite/{z}/{x}/{y}{r}.{ext}', {
     attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a> &mdash; Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     subdomains: 'abcd',
@@ -14,17 +16,31 @@ var Stamen_TonerLite = L.tileLayer('https://stamen-tiles-{s}.a.ssl.fastly.net/to
     ext: 'png'
 });
 
+//Constructor function creating PopupContent object to reduce redundant code
+function PopupContent(properties, attribute) {
+    this.properties = properties;
+    this.attribute = attribute;
+    this.year = attribute.slice(-2);
+    this.units = ""
+    if (this.properties[attribute] == -1) {
+        this.units = "MISSING DATA"
+    }
+    else (this.units = this.properties[attribute]);
+    this.formatted = "<p><b>Neighborhood:</b> " + this.properties.geo + "</p><p><b>Dwelling Units in 20" + this.year + ":</b> " + this.units + " </p>";
+
+};
+
 //step 1: create map
 function createMap() {
-    //create the map
+    //where the map loads
     map = L.map('map', {
         center: [43.0722, -89.4008],
-        zoom: 12,
+        zoom: 11.7,
         maxZoom: 15,
         minZoom: 10,
-        //maxBounds: ([
-        //  [43.23085178258045, -89.79559068008334],
-        //[42.92005741190916, -89.08330927226481]]) 
+        maxBounds: ([
+        [43.23085178258045, -89.9],
+        [42.92005741190916, -88.95]]) 
     });
 
     //add OSM base tilelayer
@@ -56,6 +72,7 @@ function neighborhoods() {
         });
 }
 
+//function calculates the minimum value of the dataset for determining proportional symbol scaling
 function calculateMinValue(data) {
     //create empty array to store all data values
     var allValues = [];
@@ -71,16 +88,22 @@ function calculateMinValue(data) {
     }
     //get minimum value of our array
     var minValue = Math.min(...allValues)
+    dataStats.min = Math.min(...allValues);
+    dataStats.max = Math.max(...allValues);
+    //calculate meanValue
+    var sum = allValues.reduce(function (a, b) { return a + b; });
+    dataStats.mean = sum / allValues.length;
 
     return minValue;
 }
 
-//calculate the radius of each proportional symbol
+//function calculates the radius of each proportional symbol
 function calcPropRadius(attValue) {
-    //constant factor adjusts symbol sizes evenly
-    var minRadius = 4;
+    //constant factor adjusts symbol sizes evenly -- I added the 0.8 to test different scaling
+    var minRadius = 0.8 * 4;
     //Flannery Apperance Compensation formula
-    //conditional if > 0
+    //conditional if > -1
+    //-1 used for "MISSING DATA"
     if (attValue > -1) {
         var radius = 1.0083 * Math.pow(attValue / minValue, 0.5715) * minRadius;
     }
@@ -92,29 +115,15 @@ function calcPropRadius(attValue) {
     return radius;
 };
 
-/*
-function onEachFeature(feature, layer) {
-    //no property named popupContent; instead, create html string with all properties
-    var popupContent = "";
-    if (feature.properties) {
-        //loop to add feature property names and values to html string
-        for (var property in feature.properties) {
-            popupContent += "<p>" + property + ": " + feature.properties[property] + "</p>";
-        }
-        layer.bindPopup(popupContent);
-    };
-};
-*/
-
+//Function creates the circles on each point feature
 function pointToLayer(feature, latlng, attributes) {
     //Determine which attribute to visualize with proportional symbols
     var attribute = attributes[0];
-    console.log(attribute);
     //create marker options
     var options = {
-        fillColor: "#ff7800",
-        color: "#000",
-        weight: 1,
+        fillColor: "#81cce3",
+        color: "#e6f0f2",
+        weight: 0.8,
         opacity: 1,
         fillOpacity: 0.8,
         pane: 'shadowPane'
@@ -129,17 +138,10 @@ function pointToLayer(feature, latlng, attributes) {
     //create circle marker layer
     var layer = L.circleMarker(latlng, options);
 
-    //build popup content string
-    var popupContent = "<p><b>Neighborhood:</b> " + feature.properties.geo + "</p>";
-    console.log(feature.properties.geo)
-    //add formatted attribute to popup content string
-    var popupValue = feature.properties[attribute] == -1 ? "No Data" : feature.properties[attribute];
-    // ----- EXAMPLE 2.3 I don't see the margins changing?? -----
-    var year = attribute.slice(-2);
-    popupContent += "<p><b>Housing units in " + "20" + year + ":</b> " + popupValue;
+    var popup = new PopupContent(feature.properties, attribute);
 
     //bind the popup to the circle marker
-    layer.bindPopup(popupContent);
+    layer.bindPopup(popup.formatted);
 
     //return the circle marker to the L.geoJson pointToLayer option
     return layer;
@@ -158,56 +160,58 @@ function createPropSymbols(data, attributes) {
 
 //Step 10: Resize proportional symbols according to new attribute values
 function updatePropSymbols(attribute) {
+    //this line updates the legend as you sequence. updates the "year" within the span div on line 260
+    document.querySelector(".year").innerHTML = "20" + attribute.slice(-2);
     map.eachLayer(function (layer) {
-        //Example 3.18 line 4
+        //this if statement filters based on attribute and geometry type. Filters out the polygon layer and the basemap
         if (layer.feature && layer.feature.properties[attribute] && layer.feature.geometry.type == "Point") {
-            
+
             //access feature properties
             var props = layer.feature.properties;
             //update each feature's radius based on new attribute values
             var radius = calcPropRadius(props[attribute]);
-            
+
             layer.setRadius(radius);
-            
-            //add city to popup content string
-            var popupContent = "<p><b>Neighborhood:</b> " + props.geo + "</p>";
-            //set missing data to -1 so that it doesn't register as "missing" data
-            var popupValue = props[attribute] == -1 ? "No Data" : props[attribute];
 
-            /*var popupValue;
-            if (props[attribute] == -1){
-                popupValue = "No Data";
-            }
-            else {
-                popupValue = props[attribute];
-            }*/
-
-            //add formatted attribute to panel content string
-            var year = attribute.slice(-2);
-            popupContent += "<p><b>Housing units in " + "20" + year + ":</b> " + popupValue;
+            var popupContent = new PopupContent(props, attribute);
 
             //update popup content            
             popup = layer.getPopup();
-            popup.setContent(popupContent).update();
+            popup.setContent(popupContent.formatted).update();
         };
     });
 };
 
-//Step 1: Create new sequence controls
+//create the slider and button controls to sequence through years
 function createSequenceControls(attributes) {
-    //create range input element (slider)
-    var slider = "<input class='range-slider' type='range'></input>";
-    document.querySelector("#panel").insertAdjacentHTML('beforeend', slider);
+    var SequenceControl = L.Control.extend({
+        options: {
+            position: 'bottomleft'
+        },
 
+        onAdd: function () {
+            // create the control container div with a particular class name
+            var container = L.DomUtil.create('div', 'sequence-control-container');
+
+            //create range input element (slider)
+            container.insertAdjacentHTML('beforeend', '<input class="range-slider" type="range">')
+            container.insertAdjacentHTML('beforeend', '<button class="step" id="reverse" title="Reverse"><img src="img/arrow_left.png"></button>')
+            container.insertAdjacentHTML('beforeend', '<button class="step" id="forward" title="Forward"><img src="img/arrow_right.png"></button>');
+
+            //disable any mouse event listeners for the container
+            L.DomEvent.disableClickPropagation(container);
+
+            return container;
+        }
+    });
+
+    map.addControl(new SequenceControl());    // add listeners after adding control}
+
+    //set the range for the slider (10 steps)
     document.querySelector(".range-slider").max = 10;
     document.querySelector(".range-slider").min = 0;
     document.querySelector(".range-slider").value = 0;
     document.querySelector(".range-slider").step = 1;
-
-    document.querySelector('#panel').insertAdjacentHTML('beforeend', '<button class="step" id="reverse"></button>');
-    document.querySelector('#panel').insertAdjacentHTML('beforeend', '<button class="step" id="forward"></button>');
-    document.querySelector('#reverse').insertAdjacentHTML('beforeend', "<img src='img/arrow_left.png'>")
-    document.querySelector('#forward').insertAdjacentHTML('beforeend', "<img src='img/arrow_right.png'>")
 
     //Step 5: click listener for buttons
     document.querySelectorAll('.step').forEach(function (step) {
@@ -236,10 +240,62 @@ function createSequenceControls(attributes) {
     document.querySelector('.range-slider').addEventListener('input', function () {
         //Step 6: get the new index value
         var index = this.value;
-        
+
         //Step 9: pass new attribute to update symbols
         updatePropSymbols(attributes[index]);
     });
+};
+
+//function makes the legend
+function createLegend(attributes) {
+    var LegendControl = L.Control.extend({
+        options: {
+            position: 'bottomright'
+        },
+
+        onAdd: function () {
+            // create the control container with a particular class name
+            var container = L.DomUtil.create('div', 'legend-control-container');
+            //legend title
+            container.innerHTML = '<p class="temporalLegend">Dwelling Units in <span class="year">2010</span></p>';
+
+            //Step 1: start attribute legend svg string for the legend circles
+            var svg = '<svg id="attribute-legend" width="100%" height="100%">';
+
+            //array of circle names to base loop on
+            var circles = ["max", "mean", "min"];
+
+            //loop to add each circle and text to svg string
+            for (var i = 0; i < circles.length; i++) {
+                //circle string
+
+                var radius = calcPropRadius(dataStats[circles[i]]);
+                var cy = 137 - radius
+                var cx = 80
+
+                svg += '<circle class="legend-circle" id="' + circles[i] +
+                    '" r="' + radius +
+                    '" cx="' + cx +
+                    '" cy="' + cy +
+                    '" fill="#81cce3" fill-opacity="0.8" stroke="#E6F0F2" cx="65"/>';
+                //evenly space out labels            
+                var textY = i * 29 + 75;
+                console.log(textY)
+                            //text string            
+            svg += '<text id="' + circles[i] + '-text" x="160" y="' + textY + '">' + Math.round(dataStats[circles[i]]*100)/100 + '</text>';
+            };
+
+            //close svg string
+            svg += "</svg>";
+
+            //add attribute legend svg to container
+            container.insertAdjacentHTML('beforeend', svg);
+
+            return container;
+        }
+    });
+    //finally add legend to the map
+    map.addControl(new LegendControl());
 };
 
 function processData(data) {
@@ -258,9 +314,6 @@ function processData(data) {
         };
     };
 
-    //check result
-    console.log(attributes);
-
     return attributes;
 };
 
@@ -275,14 +328,11 @@ function getData(map) {
             var attributes = processData(json);
             //calculate minimum data value
             minValue = calculateMinValue(json);
-            //call function to create proportional symbols
+            //call functions to create proportional symbols, sequence controls, and legend
             createPropSymbols(json, attributes);
             createSequenceControls(attributes);
+            createLegend(attributes);
         });
 };
 
 document.addEventListener('DOMContentLoaded', createMap)
-
-
-//ISSUE: Once the prop symbol draws, it doesn't go back to not being drawn when the value
-//is zero again.

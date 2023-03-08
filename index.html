@@ -1,32 +1,41 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width">
-            <title></title>
 
-        <!--put your external stylesheet links here-->
-        <link rel="stylesheet" href="css/style.css">
-        <link rel="stylesheet" href="lib/leaflet/leaflet.css">
-        <!--[if IE<9]>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title></title>
+
+    <!--put your external stylesheet links here-->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="lib/leaflet/leaflet.css">
+    <!--[if IE<9]>
             <link rel="stylesheet" href="css/style.ie.css">
         <![endif]-->
 
-         <!--you can also place internal styles here;
+    <!--you can also place internal styles here;
              place these within <style> tags-->
-        
-    </head>
 
-    <body>
-        <!--put your initial page content here-->
-        <div id="map"></div>
-        <div id="panel"></div>
-        <!--you can also use this space for internal scripts;
+</head>
+
+<body>
+    <!--put your initial page content here-->
+    <br>
+    <h1>Housing in Madison, Wisconsin</h1>
+    <h4 style="padding: 5%;">
+        The population of Madison has been consistently growing every year for the last several decades. As the city
+        grows, so too must the number of housing units.
+        This map shows the number of dwelling units in Madison neighborhoods between the years 2010 and 2020.</h4>
+    <div id="map"></div>
+    <div id="panel"></div>
+    <!--you can also use this space for internal scripts;
         place these within <script> tags-->
+    <p style="padding: 5%;">
+        Data source: https://madison.apl.wisc.edu/ <br><br> Creator: Luke Chamberlain</p>
+    <!--put your external script links here-->
+    <script type="text/javascript" src="lib/leaflet/leaflet.js"></script>
+    <script type="text/javascript" src="lib/leaflet/leaflet-providers.js"></script>
+    <script type="text/javascript" src="js/main.js"></script>
+</body>
 
-        <!--put your external script links here-->
-        <script type="text/javascript" src="lib/leaflet/leaflet.js"></script>
-        <script type="text/javascript" src="lib/leaflet/leaflet-providers.js"></script>
-        <script type="text/javascript" src="js/main.js"></script>
-    </body>
 </html>
